@@ -1,12 +1,18 @@
 program = _{ line+ }
 line = { (label ~ ":")? ~ instruction ~ (eol_comment?) ~ "\n" }
-instruction = {
-	(reg_3_arith_opcode ~ register ~ "," ~ register ~ "," ~ register)
-  | (imm_opcode         ~ register ~ "," ~ register ~ "," ~ immediate)
-  | (br_opcode          ~ register ~ "," ~ register ~ "," ~ label)
-  | (j_opcode           ~ label)
-  | (mem_opcode         ~ register ~ "," ~ mem_addr ~ "(" ~ register ~ ")")
+instruction = _{
+      reg_3_arith_instruction
+    | imm_instruction
+    | br_instruction
+    | j_instruction
+    | mem_instruction
 }
+
+reg_3_arith_instruction = { (reg_3_arith_opcode ~ register ~ "," ~ register ~ "," ~ register)       }
+imm_instruction         = { (imm_opcode         ~ register ~ "," ~ register ~ "," ~ immediate)      }
+br_instruction          = { (br_opcode          ~ register ~ "," ~ register ~ "," ~ label)          }
+j_instruction           = { (j_opcode           ~ label)                                            }
+mem_instruction         = { (mem_opcode         ~ register ~ "," ~ mem_addr ~ "(" ~ register ~ ")") }
 
 reg_3_arith_opcode = { "add" | "or" | "and" | "add" | "slt" | "sub" }
 imm_opcode = { "addi" }
