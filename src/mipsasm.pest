@@ -1,0 +1,24 @@
+program = _{ line+ }
+line = { (label ~ ":")? ~ instruction ~ (eol_comment?) ~ "\n" }
+instruction = {
+	(reg_3_arith_opcode ~ register ~ "," ~ register ~ "," ~ register)
+  | (imm_opcode         ~ register ~ "," ~ register ~ "," ~ immediate)
+  | (br_opcode          ~ register ~ "," ~ register ~ "," ~ label)
+  | (j_opcode           ~ label)
+  | (mem_opcode         ~ register ~ "," ~ mem_addr ~ "(" ~ register ~ ")")
+}
+
+reg_3_arith_opcode = { "add" | "or" | "and" | "add" | "slt" | "sub" }
+imm_opcode = { "addi" }
+br_opcode = { "beq" }
+j_opcode = { "j" }
+mem_opcode = { "sw" | "lw" }
+
+immediate = { ASCII_DIGIT+ }
+label = { ASCII_ALPHA+ }
+mem_addr = { ASCII_DIGIT+ }
+register = _{ "$" ~ reg_number }
+reg_number = { ('1'..'2' ~ ASCII_DIGIT) | "31" | ASCII_DIGIT }
+
+eol_comment = _{ "#" ~ (!"\n" ~ ANY)* }
+WHITESPACE = _{ " " }
