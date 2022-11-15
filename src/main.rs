@@ -13,19 +13,15 @@ fn main() -> Result<()> {
     let input = std::fs::read_to_string(args.input)?;
 
     let lines = MipsParser::parse(Rule::program, &input)?;
-    let mut output = String::new();
+
+    let mut parser = MipsParser::new();
 
     for line in lines {
-        for instruction in line.into_inner() {
-            let hex = MipsParser::parse_instruction(instruction);
-
-            println!("0b{:b}", hex);
-            println!("0x{:08X}", hex);
-            output = [output, hex.to_string()].join("\n");
-        }
+        parser.add_line(line);
     }
 
-    println!("OUTPUT:\n{}", output);
+    let instructions = parser.resolve_instructions();
+    instructions.iter().for_each(|h| println!("0x{:08X}", h));
 
     Ok(())
 }
