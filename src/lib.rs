@@ -211,7 +211,10 @@ impl MipsParser {
         let label = &args[3].1;
 
         let instr = ITypeInstruction::new().with_op(op).with_rs(rs).with_rt(rt);
-        PotentialInstruction::NeedsLabelResolution(TypedInstruction::IType(instr, self.current_addr), label.into())
+        PotentialInstruction::NeedsLabelResolution(
+            TypedInstruction::IType(instr, self.current_addr),
+            label.into(),
+        )
     }
 
     fn encode_j_instr(args: Pairs<Rule>) -> PotentialInstruction {
