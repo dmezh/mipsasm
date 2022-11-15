@@ -5,5 +5,5 @@ on FPGA midterm project
 
 To get hex instructions from assembly file:
 ```bash
-cargo run src/book_example.asm
+cargo run -- src/book_example.asm out.hex
 ```
