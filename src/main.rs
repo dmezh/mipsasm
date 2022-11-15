@@ -19,7 +19,7 @@ struct instr_rtype {
     rd: B5,
     rt: B5,
     rs: B5,
-    op: B6,
+    op: B6, // todo could get rid of op; it's always 0
 }
 
 impl MipsParser {
@@ -32,8 +32,9 @@ impl MipsParser {
             .map(|p| (p.as_rule(), p.as_span().as_str().into()))
             .collect();
 
-        let (op, funct) = match args[0].0 {
-            Rule::op_add => (0, 32),
+        let funct = match args[0].0 {
+            Rule::op_add => 32,
+            Rule::op_or  => 37,
             _ => panic!(),
         };
 
@@ -42,7 +43,7 @@ impl MipsParser {
         let rt: u8 = args[3].1.parse().unwrap();
 
         let instr = instr_rtype::new()
-            .with_op(op)
+            .with_op(0) // all R-type have op 0
             .with_rs(rs)
             .with_rt(rt)
             .with_rd(rd)
