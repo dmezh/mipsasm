@@ -34,12 +34,34 @@ impl MipsParser {
 
         let op = match args[0].0 {
             Rule::op_addi => 8,
-            _ => panic!("Unexpected opcode"),
+            _ => panic!("Unexpected rule"),
         };
 
         let rt: u8 = args[1].1.parse().unwrap();
         let rs: u8 = args[2].1.parse().unwrap();
         let imm: i16 = args[3].1.parse().unwrap();
+
+        let instr = ITypeInstruction::new()
+            .with_op(op)
+            .with_rs(rs)
+            .with_rt(rt)
+            .with_imm(imm as u16);
+
+        u32::from_le_bytes(instr.into_bytes())
+    }
+
+    pub fn encode_mem_instr(args: Pairs<Rule>) -> u32 {
+        let args = Self::args_to_rule_str_pairs(args);
+
+        let op = match args[0].0 {
+            Rule::op_sw => 43,
+            Rule::op_lw => 35,
+            _ => panic!("Unexpected rule")
+        };
+
+        let rt: u8 = args[1].1.parse().unwrap();
+        let imm: i16 = args[2].1.parse().unwrap();
+        let rs: u8 = args[3].1.parse().unwrap();
 
         let instr = ITypeInstruction::new()
             .with_op(op)
@@ -59,7 +81,7 @@ impl MipsParser {
             Rule::op_and => 36,
             Rule::op_slt => 42,
             Rule::op_sub => 34,
-            _ => panic!("Unexpected opcode"),
+            _ => panic!("Unexpected rule"),
         };
 
         let rd: u8 = args[1].1.parse().unwrap();
@@ -86,6 +108,7 @@ impl MipsParser {
         match op {
             Rule::imm_instruction => MipsParser::encode_imm_instr(args),
             Rule::reg_3_arith_instruction => MipsParser::encode_arith_instr(args),
+            Rule::mem_instruction => MipsParser::encode_mem_instr(args),
             _ => panic!("Error parsing: expected instruction"),
         }
     }
