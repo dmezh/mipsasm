@@ -51,13 +51,19 @@ pub enum TypedInstruction {
     RType(RTypeInstruction),
 }
 
+impl Default for MipsParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MipsParser {
     pub fn new() -> Self {
-        return MipsParser {
+        Self {
             labels: HashMap::new(),
             current_addr: 0,
             instructions: Vec::new(),
-        };
+        }
     }
 
     pub fn add_line(&mut self, line: Pair<Rule>) {

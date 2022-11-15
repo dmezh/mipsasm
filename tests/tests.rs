@@ -34,7 +34,7 @@ fn test_example_program() {
         0x8c020050, 0x08000011, 0x20020001, 0xac020054,
     ];
 
-    let lines = MipsParser::parse(Rule::program, &input).unwrap();
+    let lines = MipsParser::parse(Rule::program, input).unwrap();
     let mut parser = MipsParser::new();
 
     for line in lines {
