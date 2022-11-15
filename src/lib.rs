@@ -170,7 +170,7 @@ impl MipsParser {
 
         let rt: u8 = args[1].1.parse().unwrap();
         let rs: u8 = args[2].1.parse().unwrap();
-        let imm: i16 = args[3].1.parse().unwrap();
+        let imm: i16 = args[3].1.to_owned().trim().parse().unwrap(); // trim is hack; fix the grammar
 
         let instr = ITypeInstruction::new()
             .with_op(op)
