@@ -25,7 +25,7 @@ fn test_example_program() -> Result<(), MipsParserError> {
                 lw   $2, 80($0)
                 j    end
                 addi $2, $0, 1
-                end: sw   $2, 84($0)
+        end:    sw   $2, 84($0)
         ";
 
     let expected: Vec<u32> = vec![
