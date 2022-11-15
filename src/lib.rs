@@ -29,7 +29,7 @@ pub struct ITypeInstruction {
 }
 
 impl MipsParser {
-    pub fn encode_imm_instr(args: Pairs<Rule>) -> u32 {
+    fn encode_imm_instr(args: Pairs<Rule>) -> u32 {
         let args = Self::args_to_rule_str_pairs(args);
 
         let op = match args[0].0 {
@@ -50,7 +50,7 @@ impl MipsParser {
         u32::from_le_bytes(instr.into_bytes())
     }
 
-    pub fn encode_mem_instr(args: Pairs<Rule>) -> u32 {
+    fn encode_mem_instr(args: Pairs<Rule>) -> u32 {
         let args = Self::args_to_rule_str_pairs(args);
 
         let op = match args[0].0 {
@@ -72,7 +72,7 @@ impl MipsParser {
         u32::from_le_bytes(instr.into_bytes())
     }
 
-    pub fn encode_arith_instr(args: Pairs<Rule>) -> u32 {
+    fn encode_arith_instr(args: Pairs<Rule>) -> u32 {
         let args = Self::args_to_rule_str_pairs(args);
 
         let funct = match args[0].0 {
