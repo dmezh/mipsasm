@@ -1,12 +1,14 @@
 #![allow(dead_code)] // unfortunate but modular-bitfield keeps throwing warnings
 
 use modular_bitfield::{bitfield, specifiers::*};
-pub use pest::{iterators::{Pairs, Pair}, Parser as PestParser};
+pub use pest::{
+    iterators::{Pair, Pairs},
+    Parser as PestParser,
+};
 
 #[derive(pest_derive::Parser)]
 #[grammar = "mipsasm.pest"]
 pub struct MipsParser;
-
 
 #[bitfield(bits = 32)]
 pub struct RTypeInstruction {
@@ -18,19 +20,42 @@ pub struct RTypeInstruction {
     op: B6, // todo could get rid of op; it's always 0
 }
 
+#[bitfield(bits = 32)]
+pub struct ITypeInstruction {
+    imm: B16,
+    rt: B5,
+    rs: B5,
+    op: B6,
+}
+
 impl MipsParser {
     pub fn encode_imm_instr(args: Pairs<Rule>) -> u32 {
-        todo!()
+        let args = Self::args_to_rule_str_pairs(args);
+
+        let op = match args[0].0 {
+            Rule::op_addi => 8,
+            _ => panic!("Unexpected opcode"),
+        };
+
+        let rt: u8 = args[1].1.parse().unwrap();
+        let rs: u8 = args[2].1.parse().unwrap();
+        let imm: i16 = args[3].1.parse().unwrap();
+
+        let instr = ITypeInstruction::new()
+            .with_op(op)
+            .with_rs(rs)
+            .with_rt(rt)
+            .with_imm(imm as u16);
+
+        u32::from_le_bytes(instr.into_bytes())
     }
 
     pub fn encode_arith_instr(args: Pairs<Rule>) -> u32 {
-        let args: Vec<(Rule, String)> = args
-            .map(|p| (p.as_rule(), p.as_span().as_str().into()))
-            .collect();
+        let args = Self::args_to_rule_str_pairs(args);
 
         let funct = match args[0].0 {
             Rule::op_add => 32,
-            Rule::op_or  => 37,
+            Rule::op_or => 37,
             Rule::op_and => 36,
             Rule::op_slt => 42,
             Rule::op_sub => 34,
@@ -63,5 +88,10 @@ impl MipsParser {
             Rule::reg_3_arith_instruction => MipsParser::encode_arith_instr(args),
             _ => panic!("Error parsing: expected instruction"),
         }
+    }
+
+    fn args_to_rule_str_pairs(args: Pairs<Rule>) -> Vec<(Rule, String)> {
+        args.map(|p| (p.as_rule(), p.as_span().as_str().into()))
+            .collect()
     }
 }

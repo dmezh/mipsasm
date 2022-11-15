@@ -8,7 +8,6 @@ struct Args {
     input: String,
 }
 
-
 fn main() -> Result<()> {
     let args = Args::parse();
     let input = std::fs::read_to_string(args.input)?;

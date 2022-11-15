@@ -1,13 +1,15 @@
 use mipsasm::*;
 
 #[test]
-fn test_arith_ops() {
+fn test_instructions() {
     let cases = [
         ("add $5, $5, $4", 0x00a42820),
         ("or  $4, $7, $2", 0x00e22025),
         ("and $5, $3, $4", 0x00642824),
         ("slt $4, $3, $4", 0x0064202a),
         ("sub $7, $7, $2", 0x00e23822),
+        ("addi $2, $0, 5", 0x20020005),
+        ("addi $7, $3, -9", 0x2067fff7),
     ];
 
     let assemble = |input: &str| {
