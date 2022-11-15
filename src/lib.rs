@@ -1,5 +1,7 @@
 #![allow(dead_code)] // unfortunate but modular-bitfield keeps throwing warnings
 
+use std::collections::HashMap;
+
 use modular_bitfield::{bitfield, specifiers::*};
 pub use pest::{
     iterators::{Pair, Pairs},
@@ -8,7 +10,10 @@ pub use pest::{
 
 #[derive(pest_derive::Parser)]
 #[grammar = "mipsasm.pest"]
-pub struct MipsParser;
+pub struct MipsParser {
+    addrs: HashMap<String, u32>,
+    current_addr: u32,
+}
 
 #[bitfield(bits = 32)]
 pub struct RTypeInstruction {
@@ -29,6 +34,27 @@ pub struct ITypeInstruction {
 }
 
 impl MipsParser {
+    pub fn new() -> Self {
+        return MipsParser {
+            addrs: HashMap::new(),
+            current_addr: 0,
+        };
+    }
+
+    pub fn parse_instruction(instruction: Pair<Rule>) -> u32 {
+        let op = instruction.as_rule();
+        let args = instruction.into_inner();
+
+        println!("{:#?}", op);
+
+        match op {
+            Rule::imm_instruction => MipsParser::encode_imm_instr(args),
+            Rule::reg_3_arith_instruction => MipsParser::encode_arith_instr(args),
+            Rule::mem_instruction => MipsParser::encode_mem_instr(args),
+            _ => panic!("Error parsing: expected instruction"),
+        }
+    }
+
     fn encode_imm_instr(args: Pairs<Rule>) -> u32 {
         let args = Self::args_to_rule_str_pairs(args);
 
@@ -56,7 +82,7 @@ impl MipsParser {
         let op = match args[0].0 {
             Rule::op_sw => 43,
             Rule::op_lw => 35,
-            _ => panic!("Unexpected rule")
+            _ => panic!("Unexpected rule"),
         };
 
         let rt: u8 = args[1].1.parse().unwrap();
@@ -97,20 +123,6 @@ impl MipsParser {
             .with_funct(funct);
 
         u32::from_le_bytes(instr.into_bytes())
-    }
-
-    pub fn parse_instruction(instruction: Pair<Rule>) -> u32 {
-        let op = instruction.as_rule();
-        let args = instruction.into_inner();
-
-        println!("{:#?}", op);
-
-        match op {
-            Rule::imm_instruction => MipsParser::encode_imm_instr(args),
-            Rule::reg_3_arith_instruction => MipsParser::encode_arith_instr(args),
-            Rule::mem_instruction => MipsParser::encode_mem_instr(args),
-            _ => panic!("Error parsing: expected instruction"),
-        }
     }
 
     fn args_to_rule_str_pairs(args: Pairs<Rule>) -> Vec<(Rule, String)> {
