@@ -31,7 +31,10 @@ impl MipsParser {
         let funct = match args[0].0 {
             Rule::op_add => 32,
             Rule::op_or  => 37,
-            _ => panic!(),
+            Rule::op_and => 36,
+            Rule::op_slt => 42,
+            Rule::op_sub => 34,
+            _ => panic!("Unexpected opcode"),
         };
 
         let rd: u8 = args[1].1.parse().unwrap();

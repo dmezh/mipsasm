@@ -14,7 +14,7 @@ br_instruction          = { (br_opcode          ~ register ~ "," ~ register ~ ",
 j_instruction           = { (j_opcode           ~ label)                                            }
 mem_instruction         = { (mem_opcode         ~ register ~ "," ~ mem_addr ~ "(" ~ register ~ ")") }
 
-reg_3_arith_opcode = _{ op_add | op_or | op_and | op_add | op_slt | op_sub }
+reg_3_arith_opcode = _{ op_add | op_or | op_and | op_slt | op_sub }
 imm_opcode         = _{ op_addi }
 br_opcode          = _{ op_beq }
 j_opcode           = _{ op_j }
