@@ -92,23 +92,24 @@ impl MipsParser {
                 PotentialInstruction::NeedsLabelResolution(instr, label) => (instr, label),
             };
 
-            if let Some(a) = self.labels.get(&label) {
-                let instr = match instr {
-                    TypedInstruction::JType(j) => {
-                        let j = j.with_addr(*a as u32 / 4);
-                        u32::from_le_bytes(j.into_bytes())
-                    }
-                    TypedInstruction::IType(i, this_addr) => {
-                        let i = i.with_imm(((*a as u32 - this_addr - 1) / 4) as u16);
-                        u32::from_le_bytes(i.into_bytes())
-                    }
-                    _ => panic!("Unexpected instruction type needing label resolution"),
-                };
+            self.labels.get(&label).map_or_else(
+                || panic!("Tried to use label `{label}` and it was never defined"),
+                |a| {
+                    let instr = match instr {
+                        TypedInstruction::JType(j) => {
+                            let j = j.with_addr(*a as u32 / 4);
+                            u32::from_le_bytes(j.into_bytes())
+                        }
+                        TypedInstruction::IType(i, this_addr) => {
+                            let i = i.with_imm(((*a as u32 - this_addr - 1) / 4) as u16);
+                            u32::from_le_bytes(i.into_bytes())
+                        }
+                        _ => panic!("Unexpected instruction type needing label resolution"),
+                    };
 
-                ret.push(instr);
-            } else {
-                panic!("Tried to use label `{label}` and it was never defined")
-            }
+                    ret.push(instr);
+                },
+            );
         }
 
         ret
