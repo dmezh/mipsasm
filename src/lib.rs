@@ -66,6 +66,17 @@ impl MipsParser {
         }
     }
 
+    pub fn parse_and_resolve_entire(input: &str) -> Vec<u32> {
+        let lines = Self::parse(Rule::program, &input).unwrap();
+
+        let mut parser = Self::new();
+        for line in lines {
+            parser.add_line(line);
+        }
+
+        parser.resolve_instructions()
+    }
+
     pub fn add_line(&mut self, line: Pair<Rule>) {
         for element in line.into_inner() {
             match element.as_rule() {
@@ -119,8 +130,6 @@ impl MipsParser {
         let op = instruction.as_rule();
         let args = instruction.into_inner();
 
-        println!("{:#?}", op);
-
         match op {
             Rule::imm_instruction => PotentialInstruction::Finished(Self::encode_imm_instr(args)),
             Rule::reg_3_arith_instruction => {
@@ -144,8 +153,6 @@ impl MipsParser {
         let rt: u8 = args[1].1.parse().unwrap();
         let rs: u8 = args[2].1.parse().unwrap();
         let imm: i16 = args[3].1.parse().unwrap();
-
-        eprintln!("PROCESSING IMMEDIATE {imm} aka {:#?}", args[3]);
 
         let instr = ITypeInstruction::new()
             .with_op(op)
