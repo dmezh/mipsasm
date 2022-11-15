@@ -21,7 +21,7 @@ fn main() -> Result<()> {
     }
 
     let instructions = parser.resolve_instructions();
-    instructions.iter().for_each(|h| println!("0x{:08X}", h));
+    instructions.iter().for_each(|h| println!("0x{:08x}", h));
 
     Ok(())
 }

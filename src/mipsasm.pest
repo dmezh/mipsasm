@@ -1,4 +1,4 @@
-program = _{ line+ }
+program = _{ (line+ | "\n")+ }
 line = { (label ~ ":")? ~ instruction ~ (eol_comment?) ~ "\n" }
 instruction = _{
       reg_3_arith_instruction
