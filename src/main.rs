@@ -1,7 +1,7 @@
 use anyhow::Result;
-
 use clap::Parser as ClapParser;
-use pest::{iterators::Pairs, Parser as PestParser};
+use modular_bitfield::{bitfield, specifiers::*};
+use pest::{iterators::Pairs, Parser as PestParser, Span};
 
 #[derive(pest_derive::Parser)]
 #[grammar = "mipsasm.pest"]
@@ -12,9 +12,44 @@ struct Args {
     input: String,
 }
 
+#[bitfield(bits = 32)]
+struct instr_rtype {
+    funct: B6,
+    shamt: B5,
+    rd: B5,
+    rt: B5,
+    rs: B5,
+    op: B6,
+}
+
 impl MipsParser {
-    pub fn encode_imm_instr(args: Pairs<Rule>) -> String {
-        "".into()
+    pub fn encode_imm_instr(args: Pairs<Rule>) -> u32 {
+        todo!()
+    }
+
+    pub fn encode_arith_instr(args: Pairs<Rule>) -> u32 {
+        let args: Vec<(Rule, String)> = args
+            .map(|p| (p.as_rule(), p.as_span().as_str().into()))
+            .collect();
+
+        let (op, funct) = match args[0].0 {
+            Rule::op_add => (0, 32),
+            _ => panic!(),
+        };
+
+        let rd: u8 = args[1].1.parse().unwrap();
+        let rs: u8 = args[2].1.parse().unwrap();
+        let rt: u8 = args[3].1.parse().unwrap();
+
+        let instr = instr_rtype::new()
+            .with_op(op)
+            .with_rs(rs)
+            .with_rt(rt)
+            .with_rd(rd)
+            .with_shamt(0)
+            .with_funct(funct);
+
+        u32::from_le_bytes(instr.into_bytes())
     }
 }
 
@@ -34,10 +69,14 @@ fn main() -> Result<()> {
 
             let hex = match op {
                 Rule::imm_instruction => MipsParser::encode_imm_instr(args),
+                Rule::reg_3_arith_instruction => MipsParser::encode_arith_instr(args),
                 _ => panic!("Error parsing: expected instruction"),
             };
 
-            output = [output, hex].join("\n");
+            println!("0b{:b}", hex);
+            println!("0x{:08X}", hex);
+
+            output = [output, hex.to_string()].join("\n");
         }
     }
 
