@@ -146,6 +146,7 @@ dependencies = [
  "modular-bitfield",
  "pest",
  "pest_derive",
+ "thiserror",
 ]
 
 [[package]]

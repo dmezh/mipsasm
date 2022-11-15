@@ -6,7 +6,7 @@ fn do_vecs_match<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {
 }
 
 #[test]
-fn test_example_program() {
+fn test_example_program() -> Result<(), MipsParserError> {
     let input = "
         main:   addi $2, $0, 5
                 addi $3, $0, 12
@@ -34,13 +34,15 @@ fn test_example_program() {
         0x8c020050, 0x08000011, 0x20020001, 0xac020054,
     ];
 
-    let instructions = MipsParser::parse_and_resolve_entire(input);
+    let instructions = MipsParser::parse_and_resolve_entire(input)?;
 
     assert!(do_vecs_match(&instructions, &expected));
+
+    Ok(())
 }
 
 #[test]
-fn test_instructions() {
+fn test_instructions() -> Result<(), MipsParserError> {
     let cases = [
         ("add  $5, $5, $4", 0x00a42820),
         ("or   $4, $7, $2", 0x00e22025),
@@ -53,8 +55,8 @@ fn test_instructions() {
         ("lw   $2, 80($0)", 0x8c020050),
     ];
 
-    let assemble = |input: &str| {
-        let instrp = MipsParser::parse(Rule::instruction, input).unwrap();
+    let assemble = |input: &str| -> Result<u32, MipsParserError> {
+        let instrp = MipsParser::parse(Rule::instruction, input)?;
         let instrs: Vec<Pair<Rule>> = instrp.into_iter().collect();
         assert!(instrs.len() == 1);
 
@@ -62,12 +64,14 @@ fn test_instructions() {
         let p = MipsParser::new();
 
         match p.parse_instruction(i) {
-            PotentialInstruction::Finished(hex) => hex,
+            PotentialInstruction::Finished(hex) => Ok(hex),
             _ => panic!("Expected finished instruction"),
         }
     };
 
     for case in cases {
-        assert!(assemble(case.0) == case.1);
+        assert!(assemble(case.0)? == case.1);
     }
+
+    Ok(())
 }

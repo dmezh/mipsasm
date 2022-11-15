@@ -7,6 +7,25 @@ pub use pest::{
     iterators::{Pair, Pairs},
     Parser as PestParser,
 };
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum MipsParserError {
+    #[error("Label `{0}` was defined multiple times")]
+    LabelRedefinitionError(String),
+
+    #[error("Label `{0}` was never defined")]
+    UndefinedLabelError(String),
+
+    #[error("Parse error: {0}")]
+    ParserError(String),
+}
+
+impl From<pest::error::Error<Rule>> for MipsParserError {
+    fn from(pe: pest::error::Error<Rule>) -> Self {
+        Self::ParserError(pe.to_string())
+    }
+}
 
 pub enum PotentialInstruction {
     Finished(u32),
@@ -66,24 +85,24 @@ impl MipsParser {
         }
     }
 
-    pub fn parse_and_resolve_entire(input: &str) -> Vec<u32> {
-        let lines = Self::parse(Rule::program, &input).unwrap();
+    pub fn parse_and_resolve_entire(input: &str) -> Result<Vec<u32>, MipsParserError> {
+        let lines = Self::parse(Rule::program, input)?;
 
         let mut parser = Self::new();
         for line in lines {
-            parser.add_line(line);
+            parser.add_line(line)?;
         }
 
         parser.resolve_instructions()
     }
 
-    pub fn add_line(&mut self, line: Pair<Rule>) {
+    pub fn add_line(&mut self, line: Pair<Rule>) -> Result<(), MipsParserError> {
         for element in line.into_inner() {
             match element.as_rule() {
-                Rule::label => self.add_label(element.as_str()),
+                Rule::label => self.add_label(element.as_str())?,
                 _ => {
                     self.add_instruction(element);
-                    return;
+                    return Ok(());
                 }
             };
         }
@@ -91,7 +110,7 @@ impl MipsParser {
         panic!("Expected instruction in line")
     }
 
-    pub fn resolve_instructions(self) -> Vec<u32> {
+    pub fn resolve_instructions(self) -> Result<Vec<u32>, MipsParserError> {
         let mut ret: Vec<u32> = Vec::new();
 
         for i in self.instructions {
@@ -103,27 +122,26 @@ impl MipsParser {
                 PotentialInstruction::NeedsLabelResolution(instr, label) => (instr, label),
             };
 
-            self.labels.get(&label).map_or_else(
-                || panic!("Tried to use label `{label}` and it was never defined"),
-                |a| {
-                    let instr = match instr {
-                        TypedInstruction::JType(j) => {
-                            let j = j.with_addr(*a as u32 / 4);
-                            u32::from_le_bytes(j.into_bytes())
-                        }
-                        TypedInstruction::IType(i, this_addr) => {
-                            let i = i.with_imm(((*a as u32 - this_addr - 1) / 4) as u16);
-                            u32::from_le_bytes(i.into_bytes())
-                        }
-                        _ => panic!("Unexpected instruction type needing label resolution"),
-                    };
+            if let Some(a) = self.labels.get(&label) {
+                let instr = match instr {
+                    TypedInstruction::JType(j) => {
+                        let j = j.with_addr(*a / 4);
+                        u32::from_le_bytes(j.into_bytes())
+                    }
+                    TypedInstruction::IType(i, this_addr) => {
+                        let i = i.with_imm(((*a - this_addr - 1) / 4) as u16);
+                        u32::from_le_bytes(i.into_bytes())
+                    }
+                    _ => panic!("Unexpected instruction type needing label resolution"),
+                };
 
-                    ret.push(instr);
-                },
-            );
+                ret.push(instr);
+            } else {
+                return Err(MipsParserError::UndefinedLabelError(label));
+            }
         }
 
-        ret
+        Ok(ret)
     }
 
     pub fn parse_instruction(&self, instruction: Pair<Rule>) -> PotentialInstruction {
@@ -245,12 +263,18 @@ impl MipsParser {
         PotentialInstruction::NeedsLabelResolution(TypedInstruction::JType(instr), label.into())
     }
 
-    fn add_label(&mut self, label: &str) {
-        if self.labels.contains_key(label) {
-            panic!("Attempted to redefine label `{label}`");
+    fn add_label(&mut self, label: &str) -> Result<(), MipsParserError> {
+        if self
+            .labels
+            .insert(label.into(), self.current_addr)
+            .is_some()
+        {
+            Err(MipsParserError::LabelRedefinitionError(format!(
+                "Attempted to redefine label `{label}`"
+            )))
+        } else {
+            Ok(())
         }
-
-        self.labels.insert(label.into(), self.current_addr);
     }
 
     fn add_instruction(&mut self, instruction: Pair<Rule>) {
